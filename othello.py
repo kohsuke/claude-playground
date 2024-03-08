@@ -8,7 +8,7 @@ CELL_SIZE = 50
 WINDOW_SIZE = BOARD_SIZE * CELL_SIZE
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-GREEN = (0, 255, 0)
+GREEN = (0, 128, 0)  # Toned down green color
 
 # Piece enum
 class Piece(Enum):
@@ -115,7 +115,6 @@ class Drawing:
         screen.blit(black_score_text, (10, WINDOW_SIZE - 40))
         screen.blit(white_score_text, (WINDOW_SIZE - 120, WINDOW_SIZE - 40))
 
-# Game class
 class Game:
     def __init__(self):
         self.board = Board()
@@ -126,12 +125,13 @@ class Game:
         screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
         pygame.display.set_caption("Othello")
 
+        game_over = False
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
+                elif event.type == pygame.MOUSEBUTTONDOWN and not game_over:
                     x, y = pygame.mouse.get_pos()
                     row, col = y // CELL_SIZE, x // CELL_SIZE
                     if self.board.make_move(row, col, self.current_player):
@@ -139,16 +139,44 @@ class Game:
 
             screen.fill(BLACK)
             Drawing.draw_board(screen, self.board)
-            valid_moves = self.board.get_valid_moves(self.current_player)
-            Drawing.draw_valid_moves(screen, valid_moves)
+            if not game_over:
+                valid_moves = self.board.get_valid_moves(self.current_player)
+                Drawing.draw_valid_moves(screen, valid_moves)
             score = self.board.get_score()
             Drawing.draw_score(screen, score)
             pygame.display.flip()
 
-            if self.board.is_game_over():
-                break
+            if self.board.is_game_over() and not game_over:
+                game_over = True
+                self.show_game_over_screen(screen, score)
 
         pygame.quit()
+
+    def show_game_over_screen(self, screen, score):
+        font = pygame.font.Font(None, 48)
+        game_over_text = font.render("Game Over", True, WHITE)
+        black_score, white_score = score
+        winner_text = font.render("Black Wins!" if black_score > white_score else "White Wins!", True, WHITE)
+        play_again_text = font.render("Click to play again", True, WHITE)
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    self.reset_game()
+                    return
+
+            screen.fill(BLACK)
+            screen.blit(game_over_text, (WINDOW_SIZE // 2 - game_over_text.get_width() // 2, 100))
+            screen.blit(winner_text, (WINDOW_SIZE // 2 - winner_text.get_width() // 2, 200))
+            screen.blit(play_again_text, (WINDOW_SIZE // 2 - play_again_text.get_width() // 2, 300))
+            pygame.display.flip()
+
+    def reset_game(self):
+        self.board = Board()
+        self.current_player = Piece.BLACK
 
 # Main function
 def main():
