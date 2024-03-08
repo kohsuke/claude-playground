@@ -20,6 +20,9 @@ class Vector2D:
     def __sub__(self, other):
         return Vector2D(self.row - other.row, self.col - other.col)
 
+    def __eq__(self, other):
+        return self.row == other.row and self.col == other.col
+
     def __str__(self):
         return f"({self.row}, {self.col})"
 
@@ -48,7 +51,7 @@ class Othello:
         self.set_cell(Vector2D(4, 3), Player.BLACK)
 
     def print_board(self):
-        print('  ' + '  '.join([str(i) for i in range(self.BOARD_SIZE)]))
+        print(' ' + ' '.join([str(i) for i in range(self.BOARD_SIZE)]))
         for row in range(self.BOARD_SIZE):
             print(str(row) + ' ' + ' '.join([self.get_cell(Vector2D(row, col)).value for col in range(self.BOARD_SIZE)]))
 
