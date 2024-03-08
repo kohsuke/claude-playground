@@ -36,9 +36,11 @@ class TestOthello(unittest.TestCase):
         self.assertEqual(self.game.get_valid_moves(Player.WHITE), valid_moves_white)
 
     def test_check_direction(self):
-        self.assertEqual(self.game.check_direction(Vector2D(3, 2), Player.WHITE, Othello.EAST), [Vector2D(3, 3)])
         self.assertEqual(self.game.check_direction(Vector2D(2, 3), Player.BLACK, Othello.SOUTH), [Vector2D(3, 3)])
-        self.assertEqual(self.game.check_direction(Vector2D(3, 3), Player.WHITE, Othello.NORTHEAST), [])
+        self.assertEqual(self.game.check_direction(Vector2D(5, 4), Player.WHITE, Othello.NORTH), [Vector2D(4, 4)])
+        self.assertEqual(self.game.check_direction(Vector2D(2, 2), Player.BLACK, Othello.SOUTHEAST), [Vector2D(3, 3), Vector2D(4, 4)])
+        self.assertEqual(self.game.check_direction(Vector2D(3, 5), Player.WHITE, Othello.WEST), [Vector2D(3, 4)])
+        self.assertEqual(self.game.check_direction(Vector2D(0, 0), Player.BLACK, Othello.NORTHEAST), [])
 
     def test_is_on_board(self):
         self.assertTrue(self.game.is_on_board(Vector2D(0, 0)))
