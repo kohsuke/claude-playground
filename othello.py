@@ -1,52 +1,93 @@
 # othello.py
+from enum import Enum
+
+class Player(Enum):
+    EMPTY = 0
+    WHITE = 1
+    BLACK = 2
+
+    @property
+    def opponent(self):
+        return Player.BLACK if self == Player.WHITE else Player.WHITE
+
+class Vector2D:
+    def __init__(self, row, col):
+        self.row = row
+        self.col = col
+
+    def __add__(self, other):
+        return Vector2D(self.row + other.row, self.col + other.col)
+
+    def __sub__(self, other):
+        return Vector2D(self.row - other.row, self.col - other.col)
+
+    def __str__(self):
+        return f"({self.row}, {self.col})"
+
+    def __repr__(self):
+        return str(self)
+
 
 class Othello:
+    NORTH = Vector2D(-1, 0)
+    NORTHEAST = Vector2D(-1, 1)
+    EAST = Vector2D(0, 1)
+    SOUTHEAST = Vector2D(1, 1)
+    SOUTH = Vector2D(1, 0)
+    SOUTHWEST = Vector2D(1, -1)
+    WEST = Vector2D(0, -1)
+    NORTHWEST = Vector2D(-1, -1)
+
+    DIRECTIONS = [NORTH, NORTHEAST, EAST, SOUTHEAST, SOUTH, SOUTHWEST, WEST, NORTHWEST]
+
     def __init__(self):
         self.BOARD_SIZE = 8
-        self.PLAYER_SYMBOLS = {
-            0: ' ',
-            1: 'W',
-            2: 'B'
-        }
-        self.board = [[0 for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
-        self.board[3][3] = self.board[4][4] = 1  # Player 1 (White)
-        self.board[3][4] = self.board[4][3] = 2  # Player 2 (Black)
+        self.board = [[Player.EMPTY for _ in range(self.BOARD_SIZE)] for _ in range(self.BOARD_SIZE)]
+        self.board[3][3] = self.board[4][4] = Player.WHITE
+        self.board[3][4] = self.board[4][3] = Player.BLACK
 
     def print_board(self):
         print('  ' + '  '.join([str(i) for i in range(self.BOARD_SIZE)]))
         for row in range(self.BOARD_SIZE):
-            print(str(row) + ' ' + ' '.join([self.PLAYER_SYMBOLS[self.board[row][col]] for col in range(self.BOARD_SIZE)]))
+            print(str(row) + ' ' + ' '.join([str(self.board[row][col]) for col in range(self.BOARD_SIZE)]))
 
     def get_valid_moves(self, player):
         valid_moves = []
-        opponent = 2 if player == 1 else 1
         for row in range(self.BOARD_SIZE):
             for col in range(self.BOARD_SIZE):
-                if self.board[row][col] == 0:
-                    if any(self.check_direction(row, col, player, opponent, dx, dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1] if (dx, dy) != (0, 0)):
-                        valid_moves.append((row, col))
+                position = Vector2D(row, col)
+                if self.board[row][col] == Player.EMPTY:
+                    if any(self.check_direction(position, player, player.opponent, direction) for direction in self.DIRECTIONS):
+                        valid_moves.append(position)
         return valid_moves
 
-    def check_direction(self, row, col, player, opponent, dx, dy):
-        x, y = row + dx, col + dy
+    def check_direction(self, position, player, opponent, direction):
+        current_position = position + direction
         tiles = []
-        while 0 <= x < self.BOARD_SIZE and 0 <= y < self.BOARD_SIZE and self.board[x][y] == opponent:
-            tiles.append((x, y))
-            x += dx
-            y += dy
-        if tiles and 0 <= x < self.BOARD_SIZE and 0 <= y < self.BOARD_SIZE and self.board[x][y] == player:
+
+        while self.is_on_board(current_position) and self.board[current_position.row][current_position.col] == opponent:
+            tiles.append(current_position)
+            current_position += direction
+
+        if (
+            tiles
+            and self.is_on_board(current_position)
+            and self.board[current_position.row][current_position.col] == player
+        ):
             return tiles
+
         return []
 
-    def make_move(self, row, col, player):
-        self.board[row][col] = player
-        opponent = 2 if player == 1 else 1
-        for dx in [-1, 0, 1]:
-            for dy in [-1, 0, 1]:
-                if (dx, dy) != (0, 0):
-                    tiles = self.check_direction(row, col, player, opponent, dx, dy)
-                    for x, y in tiles:
-                        self.board[x][y] = player
+    def is_on_board(self, position):
+        return 0 <= position.row < self.BOARD_SIZE and 0 <= position.col < self.BOARD_SIZE
+
+    def make_move(self, position, player):
+        self.board[position.row][position.col] = player
+        opponent = player.opponent
+        for direction in self.DIRECTIONS:
+            tiles = self.check_direction(position, player, opponent, direction)
+            for tile in tiles:
+                self.board[tile.row][tile.col] = player
 
     def play(self):
         player = 1
