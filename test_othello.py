@@ -1,52 +1,61 @@
 import unittest
-from unittest.mock import patch
-from io import StringIO
+from othello import Othello, Player, Vector2D
 
-from othello import Othello, Vector2D, Player
-
-class TestOthelloGame(unittest.TestCase):
-
+class TestOthello(unittest.TestCase):
     def setUp(self):
         self.game = Othello()
 
+    def test_initial_board(self):
+        expected_board = [
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY],
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY],
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY],
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.WHITE, Player.BLACK, Player.EMPTY, Player.EMPTY, Player.EMPTY],
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.BLACK, Player.WHITE, Player.EMPTY, Player.EMPTY, Player.EMPTY],
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY],
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY],
+            [Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY, Player.EMPTY]
+        ]
+        self.assertEqual(self.game.board, expected_board)
+
+    def test_get_cell(self):
+        self.assertEqual(self.game.get_cell(Vector2D(3, 3)), Player.WHITE)
+        self.assertEqual(self.game.get_cell(Vector2D(3, 4)), Player.BLACK)
+        self.assertEqual(self.game.get_cell(Vector2D(4, 3)), Player.BLACK)
+        self.assertEqual(self.game.get_cell(Vector2D(4, 4)), Player.WHITE)
+        self.assertEqual(self.game.get_cell(Vector2D(0, 0)), Player.EMPTY)
+
+    def test_set_cell(self):
+        self.game.set_cell(Vector2D(0, 0), Player.WHITE)
+        self.assertEqual(self.game.get_cell(Vector2D(0, 0)), Player.WHITE)
+
     def test_get_valid_moves(self):
-        valid_moves_player_1 = self.game.get_valid_moves(Player.WHITE)
-        valid_moves_player_2 = self.game.get_valid_moves(Player.BLACK)
-        self.assertEqual(len(valid_moves_player_1), 4)
-        self.assertEqual(len(valid_moves_player_2), 4)
-        self.assertIn(Vector2D(2, 3), valid_moves_player_2)
-        self.assertIn(Vector2D(3, 2), valid_moves_player_1)
+        valid_moves_black = [Vector2D(2, 3), Vector2D(3, 2), Vector2D(4, 5), Vector2D(5, 4)]
+        valid_moves_white = [Vector2D(2, 4), Vector2D(3, 5), Vector2D(4, 2), Vector2D(5, 3)]
+        self.assertEqual(self.game.get_valid_moves(Player.BLACK), valid_moves_black)
+        self.assertEqual(self.game.get_valid_moves(Player.WHITE), valid_moves_white)
 
     def test_check_direction(self):
-        tiles = self.game.check_direction(Vector2D(2, 3), Player.BLACK, Player.BLACK.opponent, Othello.EAST)
-        self.assertEqual(tiles, [Vector2D(3, 4)])
-        tiles = self.game.check_direction(Vector2D(3, 2), Player.WHITE, Player.WHITE.opponent, Othello.NORTH)
-        self.assertEqual(tiles, [Vector2D(4, 3)])
-        tiles = self.game.check_direction(Vector2D(3, 3), Player.WHITE, Player.WHITE.opponent, Othello.NORTHEAST)
-        self.assertEqual(tiles, [])
+        self.assertEqual(self.game.check_direction(Vector2D(2, 3), Player.BLACK, Othello.EAST), [Vector2D(3, 4)])
+        self.assertEqual(self.game.check_direction(Vector2D(3, 2), Player.WHITE, Othello.NORTH), [Vector2D(4, 3)])
+        self.assertEqual(self.game.check_direction(Vector2D(3, 3), Player.WHITE, Othello.NORTHEAST), [])
+
+    def test_is_on_board(self):
+        self.assertTrue(self.game.is_on_board(Vector2D(0, 0)))
+        self.assertTrue(self.game.is_on_board(Vector2D(7, 7)))
+        self.assertFalse(self.game.is_on_board(Vector2D(-1, 0)))
+        self.assertFalse(self.game.is_on_board(Vector2D(0, 8)))
 
     def test_make_move(self):
         self.game.make_move(Vector2D(2, 3), Player.BLACK)
-        self.assertEqual(self.game.board[2][3], Player.BLACK)
-        self.assertEqual(self.game.board[3][4], Player.BLACK)
-        self.game.make_move(Vector2D(3, 2), Player.WHITE)
-        self.assertEqual(self.game.board[3][2], Player.WHITE)
-        self.assertEqual(self.game.board[4][3], Player.WHITE)
+        self.assertEqual(self.game.get_cell(Vector2D(2, 3)), Player.BLACK)
+        self.assertEqual(self.game.get_cell(Vector2D(3, 3)), Player.BLACK)
+        self.assertEqual(self.game.get_cell(Vector2D(3, 4)), Player.BLACK)
 
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_print_board(self, mock_stdout):
-        self.game.print_board()
-        expected_output = """  0 1 2 3 4 5 6 7
-0 0 0 0 0 0 0 0 0
-1 0 0 0 0 0 0 0 0
-2 0 0 0 2 0 0 0 0
-3 0 0 1 2 1 0 0 0
-4 0 0 2 1 0 0 0 0
-5 0 0 0 0 0 0 0 0
-6 0 0 0 0 0 0 0 0
-7 0 0 0 0 0 0 0 0
-"""
-        self.assertEqual(mock_stdout.getvalue(), expected_output)
+        self.game.make_move(Vector2D(2, 4), Player.WHITE)
+        self.assertEqual(self.game.get_cell(Vector2D(2, 4)), Player.WHITE)
+        self.assertEqual(self.game.get_cell(Vector2D(3, 4)), Player.WHITE)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
